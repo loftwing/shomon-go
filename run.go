@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/loftwing/shomon"
+	"github.com/loftwing/shomon-go/shomon"
 )
 
 //This is just here for testing right now, eventually will be main entrypoint
@@ -20,7 +20,7 @@ func main() {
 	// }
 
 	log.Println("Starting monitor with configpath: ", *ptrConfigPath)
-	mon := shodanmon.NewMonitor(*ptrConfigPath)
+	mon := shomon.NewMonitor(*ptrConfigPath)
 	if err := mon.Status(); err != nil {
 		log.Println(err)
 	}
