@@ -23,6 +23,7 @@ func main() {
 	c := mon.ShodanClient
 	c.SetDebug(true)
 	mon.Status()
+	err := mon.RegisterAlerts()
 	//Buffered channel to move banners from the shodan stream to the Consume function above
 	firehose := make(chan *shodan.HostData)
 

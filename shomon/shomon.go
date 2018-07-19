@@ -36,6 +36,26 @@ func NewMonitor(configpath string) *ShodanMon {
 		Config:       conf}
 }
 
+func (sm *ShodanMon) RegisterAlerts() error {
+	c := sm.ShodanClient
+	cAlerts := sm.Config.Shodan.Networks
+
+	if rAlerts, err := c.GetAlerts(nil); err != nil {
+		return err
+	}
+
+	log.Println("cAlerts")
+	for _, ca := range cAlerts {
+		log.Println(ca)
+	}
+
+	log.Println("rAlerts")
+	for _, ra := range rAlerts {
+		log.Printf("%+v\n", ra)
+	}
+
+}
+
 func loadConfig(file string) *Config {
 	var config Config
 	configFile, err := os.Open(file)
