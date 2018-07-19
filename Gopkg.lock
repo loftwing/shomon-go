@@ -14,6 +14,12 @@
   revision = "9ac6cf4d929b2fa8fd2d2e6dec5bb0feb4f4911d"
 
 [[projects]]
+  name = "github.com/ns3777k/go-shodan"
+  packages = ["shodan"]
+  revision = "ababb42efa594d2668b38e27ca7403813c89d8a9"
+  version = "v3.1.0"
+
+[[projects]]
   name = "gopkg.in/ns3777k/go-shodan.v3"
   packages = ["shodan"]
   revision = "ababb42efa594d2668b38e27ca7403813c89d8a9"
@@ -22,6 +28,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fecde545e7f0ba48cfaca8b288dd6e8038410365f022056634966b3b106dcf02"
+  inputs-digest = "f99a20e6c4cf8f3621f3726f02cac3faa2779874ae0d1f889105706eab6e5218"
   solver-name = "gps-cdcl"
   solver-version = 1

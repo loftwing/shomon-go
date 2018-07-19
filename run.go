@@ -1,27 +1,42 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 
 	"github.com/loftwing/shomon-go/shomon"
+	"gopkg.in/ns3777k/go-shodan.v3/shodan"
 )
+
+// func Worker(ch *HostData) {
+
+// }
 
 //This is just here for testing right now, eventually will be main entrypoint
 func main() {
 	ptrConfigPath := flag.String("config", "config.json", "Path to alternate config file")
 	flag.Parse()
 
-	// if *ptrConfigPath != "config.json" {
-	// 	cwd, err := os.Getwd()
-	// 	if err != nil {
-	// 		log.Panic(err)
-	// 	}
-	// }
-
 	log.Println("Starting monitor with configpath: ", *ptrConfigPath)
 	mon := shomon.NewMonitor(*ptrConfigPath)
-	if err := mon.Status(); err != nil {
-		log.Println(err)
+	c := mon.ShodanClient
+	c.SetDebug(true)
+	mon.Status()
+	//Buffered channel to move banners from the shodan stream to the Consume function above
+	firehose := make(chan *shodan.HostData)
+
+	err := c.GetBannersByPorts(context.Background(), []int{10}, firehose)
+	if err != nil {
+		panic(err)
+	}
+
+	for {
+		banner, ok := <-firehose
+		if !ok {
+			log.Println("channel closed")
+		}
+
+		log.Println("%+v\n", banner)
 	}
 }

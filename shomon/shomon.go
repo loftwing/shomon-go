@@ -49,12 +49,23 @@ func loadConfig(file string) *Config {
 }
 
 //Status prints current status of monitor to logger, or returns an error
-func (sm *ShodanMon) Status() error {
-	log.Println("Monitor Status: ")
-	if profile, err := sm.ShodanClient.GetAccountProfile(nil); err != nil {
-		return err
+func (sm *ShodanMon) Status() {
+	c := sm.ShodanClient
+	log.Println("Monitor Status")
+
+	log.Println("======PROFILE======")
+	if profile, err := c.GetAccountProfile(nil); err != nil {
+		log.Println("Error pulling profile info from API.")
 	} else {
 		log.Printf("%+v\n", profile)
-		return nil
+	}
+
+	log.Println("======ALERTS======")
+	if alerts, err := c.GetAlerts(nil); err != nil {
+		log.Println("Error pulling alert info from API.")
+	} else {
+		for _, a := range alerts {
+			log.Printf("%+v\n", a)
+		}
 	}
 }
