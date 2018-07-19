@@ -36,24 +36,32 @@ func NewMonitor(configpath string) *ShodanMon {
 		Config:       conf}
 }
 
-func (sm *ShodanMon) RegisterAlerts() error {
+func (sm *ShodanMon) checkAlert(name string) bool {
+	c := sm.ShodanClient
+	if rAlerts, err := c.GetAlerts(nil); err != nil {
+		log.Panic("Couldnt get alerts.")
+	} else {
+		for _, ra := range rAlerts {
+			if ra.Name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (sm *ShodanMon) RegisterAlerts() {
 	c := sm.ShodanClient
 	cAlerts := sm.Config.Shodan.Networks
 
-	if rAlerts, err := c.GetAlerts(nil); err != nil {
-		return err
+	for n, b := range cAlerts {
+		if prs := sm.checkAlert(n); !prs {
+			log.Println("Adding: ", n, b)
+			if _, err := c.CreateAlert(nil, n, []string{b}, 0); err != nil {
+				log.Println("Failed to register alert: ", n, b)
+			}
+		}
 	}
-
-	log.Println("cAlerts")
-	for _, ca := range cAlerts {
-		log.Println(ca)
-	}
-
-	log.Println("rAlerts")
-	for _, ra := range rAlerts {
-		log.Printf("%+v\n", ra)
-	}
-
 }
 
 func loadConfig(file string) *Config {
