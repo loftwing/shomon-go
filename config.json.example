@@ -1,0 +1,14 @@
+{
+    "shodan": {
+        "apikey": "SHODAN_API_KEY",
+        "networks": {
+            "NETWORK NAME": "0.0.0.0/0",
+            "NETWORK2NAME": "120.0.0.0/8"
+        }
+    },
+    "email": {
+        "server": "HOSTNAME:PORT",
+        "from": "SHODAN@PWNED.NL",
+        "to": ["ELONGATED_MUSKRAT@TESLA.RU", "SBALLMER@DEVELOPERS.COM"]
+    }
+}
