@@ -26,7 +26,7 @@ func main() {
 	//Buffered channel to move banners from the shodan stream to the Consume function above
 	firehose := make(chan *shodan.HostData)
 
-	err := c.GetBannersByPorts(context.Background(), []int{10}, firehose)
+	err := c.GetBannersByAlerts(context.Background(), firehose)
 	if err != nil {
 		panic(err)
 	}
