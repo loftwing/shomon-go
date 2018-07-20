@@ -27,7 +27,7 @@ type Config struct {
 	} `json:"email"`
 }
 
-//InitMon creates a new ShodanMon and returns it
+//NewMonitor creates a new ShodanMon and returns it
 func NewMonitor(configpath string) *ShodanMon {
 	conf := loadConfig(configpath)
 	newClient := shodan.NewClient(nil, conf.Shodan.APIKey)
@@ -50,6 +50,7 @@ func (sm *ShodanMon) checkAlert(name string) bool {
 	return false
 }
 
+//RegisterAlerts loops through configured alerts, and registers those that are not registered
 func (sm *ShodanMon) RegisterAlerts() {
 	c := sm.ShodanClient
 	cAlerts := sm.Config.Shodan.Networks
