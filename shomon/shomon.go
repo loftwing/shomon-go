@@ -84,7 +84,7 @@ func (sm *ShodanMon) Status() {
 
 	log.Println("======PROFILE======")
 	if profile, err := c.GetAccountProfile(nil); err != nil {
-		log.Println("Error pulling profile info from API.")
+		log.Println("Error pulling profile info from API: ", err)
 	} else {
 		log.Printf("%+v\n", profile)
 	}
