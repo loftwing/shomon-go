@@ -2,9 +2,11 @@ package shomon
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 
+	"gopkg.in/gomail.v2"
 	"gopkg.in/ns3777k/go-shodan.v3/shodan"
 )
 
@@ -75,6 +77,38 @@ func loadConfig(file string) *Config {
 	jsonParser := json.NewDecoder(configFile)
 	jsonParser.Decode(&config)
 	return &config
+}
+
+// Send a single banner by smtp
+func (sm *ShodanMon) SendBannerEmail(b *shodan.HostData) error {
+	m := gomail.NewMessage()
+	m.SetHeader("From", sm.Config.Email.From)
+	m.SetHeader("To", sm.Config.Email.To[0])
+	m.SetHeader("Subject", "ShoMon: Service Found")
+	body := fmt.Sprintf(`
+<b>IP:</b> %s
+<b>Port:</b> %d
+<b>Transport:</b> %s
+<b>Title:</b> %s
+<b>Opts:</b>
+%+v`, string(b.IP), b.Port, b.Transport, b.Title, b.Opts)
+
+	m.SetBody("text/html", body)
+
+	d := &gomail.Dialer{
+		Port: 25,
+		Auth: nil,
+		Host: sm.Config.Email.Server,
+		SSL:  false,
+	}
+
+	// Send it
+	if err := d.DialAndSend(m); err != nil {
+		return err
+	} else {
+		return nil
+	}
+
 }
 
 // Status prints current status of monitor to logger, or returns an error

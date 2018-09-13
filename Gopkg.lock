@@ -14,6 +14,18 @@
   revision = "9ac6cf4d929b2fa8fd2d2e6dec5bb0feb4f4911d"
 
 [[projects]]
+  branch = "v3"
+  name = "gopkg.in/alexcesaro/quotedprintable.v3"
+  packages = ["."]
+  revision = "2caba252f4dc53eaf6b553000885530023f54623"
+
+[[projects]]
+  name = "gopkg.in/gomail.v2"
+  packages = ["."]
+  revision = "41f3572897373c5538c50a2402db15db079fa4fd"
+  version = "2.0.0"
+
+[[projects]]
   name = "gopkg.in/ns3777k/go-shodan.v3"
   packages = ["shodan"]
   revision = "ababb42efa594d2668b38e27ca7403813c89d8a9"
@@ -22,6 +34,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fecde545e7f0ba48cfaca8b288dd6e8038410365f022056634966b3b106dcf02"
+  inputs-digest = "dc55d4adfd249f4d79a1a9185b5abd60428f8603e7ac4d5860321ebae063cef1"
   solver-name = "gps-cdcl"
   solver-version = 1

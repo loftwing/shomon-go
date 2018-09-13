@@ -9,10 +9,6 @@ import (
 	"gopkg.in/ns3777k/go-shodan.v3/shodan"
 )
 
-// func Worker(ch *HostData) {
-
-// }
-
 // This is just here for testing right now, eventually will be main entrypoint
 func main() {
 	ptrConfigPath := flag.String("config", "config.json", "Path to alternate config file")
@@ -39,5 +35,7 @@ func main() {
 		}
 
 		log.Printf("%+v\n", banner)
+
+		mon.SendBannerEmail(banner)
 	}
 }
