@@ -13,7 +13,7 @@ import (
 
 // }
 
-//This is just here for testing right now, eventually will be main entrypoint
+// This is just here for testing right now, eventually will be main entrypoint
 func main() {
 	ptrConfigPath := flag.String("config", "config.json", "Path to alternate config file")
 	flag.Parse()
@@ -24,7 +24,7 @@ func main() {
 	c.SetDebug(true)
 	mon.Status()
 	mon.RegisterAlerts()
-	//Buffered channel to move banners from the shodan stream to the Consume function above
+	// Buffered channel to move banners from the shodan stream to the Consume function above
 	firehose := make(chan *shodan.HostData)
 
 	err := c.GetBannersByAlerts(context.Background(), firehose)
@@ -38,6 +38,6 @@ func main() {
 			log.Println("channel closed")
 		}
 
-		log.Println("%+v\n", banner)
+		log.Printf("%+v\n", banner)
 	}
 }

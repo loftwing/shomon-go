@@ -8,13 +8,13 @@ import (
 	"gopkg.in/ns3777k/go-shodan.v3/shodan"
 )
 
-//ShodanMon todo
+// ShodanMon todo
 type ShodanMon struct {
 	ShodanClient *shodan.Client
 	Config       *Config
 }
 
-//Config defines json structure for config file
+// Config defines json structure for config file
 type Config struct {
 	Shodan struct {
 		APIKey   string            `json:"apikey"`
@@ -27,7 +27,7 @@ type Config struct {
 	} `json:"email"`
 }
 
-//NewMonitor creates a new ShodanMon and returns it
+// NewMonitor creates a new ShodanMon and returns it
 func NewMonitor(configpath string) *ShodanMon {
 	conf := loadConfig(configpath)
 	newClient := shodan.NewClient(nil, conf.Shodan.APIKey)
@@ -50,7 +50,7 @@ func (sm *ShodanMon) checkAlert(name string) bool {
 	return false
 }
 
-//RegisterAlerts loops through configured alerts, and registers those that are not registered
+// RegisterAlerts loops through configured alerts, and registers those that are not registered
 func (sm *ShodanMon) RegisterAlerts() {
 	c := sm.ShodanClient
 	cAlerts := sm.Config.Shodan.Networks
@@ -77,7 +77,7 @@ func loadConfig(file string) *Config {
 	return &config
 }
 
-//Status prints current status of monitor to logger, or returns an error
+// Status prints current status of monitor to logger, or returns an error
 func (sm *ShodanMon) Status() {
 	c := sm.ShodanClient
 	log.Println("Monitor Status")
