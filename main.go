@@ -1,34 +1,28 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 	"time"
 
 	"github.com/loftwing/shomon-go/shomon"
-	"gopkg.in/ns3777k/go-shodan.v3/shodan"
 )
 
 // This is just here for testing right now, eventually will be main entrypoint
 func main() {
 	ptrConfigPath := flag.String("config", "config.json", "Path to alternate config file")
+	isLearning := flag.Bool("learning", false, "Learning mode")
+	isDebug := flag.Bool("debug", false, "Debug mode")
 	flag.Parse()
 
 	log.Println("Starting monitor with configpath: ", *ptrConfigPath)
-	mon := shomon.NewMonitor(*ptrConfigPath)
-	c := mon.ShodanClient
-	c.SetDebug(true)
+	mon := shomon.NewMonitor(*ptrConfigPath, *isLearning, *isDebug)
 	mon.Status()
 	mon.RegisterAlerts()
 
 	for {
-		firehose := make(chan *shodan.HostData)
+		firehose := mon.Start()
 
-		err := c.GetBannersByAlerts(context.Background(), firehose)
-		if err != nil || firehose == nil {
-			panic(err)
-		}
 		for {
 			banner, ok := <-firehose
 			if !ok {
@@ -37,13 +31,11 @@ func main() {
 				break
 			}
 
-			log.Printf("%+v\n", banner)
-
+			mon.ProcessBanner(banner)
 			err := mon.SendBannerEmail(banner)
 			if err != nil {
 				log.Println("Failed to send email: ", err)
 			}
 		}
-
 	}
 }

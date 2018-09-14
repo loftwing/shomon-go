@@ -1,8 +1,10 @@
 package shomon
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -14,6 +16,9 @@ import (
 type ShodanMon struct {
 	ShodanClient *shodan.Client
 	Config       *Config
+	ConfigPath   string
+	Known        []Service
+	Learning     bool
 }
 
 // Config defines json structure for config file
@@ -27,15 +32,97 @@ type Config struct {
 		From   string   `json:"from"`
 		To     []string `json:"to"`
 	} `json:"email"`
+	Known []Service `json:"known"`
+}
+
+// Service reps a single service
+type Service struct {
+	IP        string `json:"ip"`
+	Port      int    `json:"port"`
+	Transport string `json:"transport"`
 }
 
 // NewMonitor creates a new ShodanMon and returns it
-func NewMonitor(configpath string) *ShodanMon {
+func NewMonitor(configpath string, isLearning, isDebug bool) *ShodanMon {
 	conf := loadConfig(configpath)
 	newClient := shodan.NewClient(nil, conf.Shodan.APIKey)
+	if isDebug {
+		newClient.SetDebug(true)
+	}
+
 	return &ShodanMon{
 		ShodanClient: newClient,
-		Config:       conf}
+		Config:       conf,
+		ConfigPath:   configpath,
+		Known:        conf.Known,
+		Learning:     isLearning,
+	}
+}
+
+func (sm *ShodanMon) writeServiceToConfig(s *Service) error {
+	sm.Config.Known = append(sm.Config.Known, *s)
+
+	if nc, err := json.Marshal(sm.Config); err != nil {
+		return err
+	} else {
+		err := ioutil.WriteFile(sm.ConfigPath, nc, 0644)
+		if err != nil {
+			return err
+		} else {
+			return nil
+		}
+	}
+}
+
+func (sm *ShodanMon) Start() chan *shodan.HostData {
+	nc := make(chan *shodan.HostData)
+	err := sm.ShodanClient.GetBannersByAlerts(context.Background(), nc)
+	if err != nil {
+		log.Panic("Couldnt start shomon firehose!: ", err)
+	}
+	return nc
+}
+
+func (sm *ShodanMon) ProcessBanner(h *shodan.HostData) {
+	DescribeBanner(h)
+
+	s := Service{
+		IP:        string(h.IP),
+		Port:      h.Port,
+		Transport: h.Transport,
+	}
+
+	if !sm.IsKnown(s) {
+		sm.AddKnown(s)
+	}
+}
+
+func (sm *ShodanMon) IsKnown(s Service) bool {
+	known := false
+	for _, v := range sm.Known {
+		if v.Transport == s.Transport && v.IP == s.IP && v.Port == s.Port {
+			known = true
+		}
+	}
+
+	return known
+}
+
+func DescribeBanner(h *shodan.HostData) {
+	log.Println("========================")
+	log.Printf("IP: %s\n", string(h.IP))
+	log.Printf("Port: %d\n", h.Port)
+	log.Printf("Transport: %s\n", h.Transport)
+}
+
+func (sm *ShodanMon) AddKnown(s Service) {
+	if sm.Learning {
+		if err := sm.writeServiceToConfig(&s); err != nil {
+			log.Println("Couldnt write service to config: ", err)
+		}
+	}
+
+	sm.Known = append(sm.Known, s)
 }
 
 func (sm *ShodanMon) checkAlert(name string) bool {
@@ -114,6 +201,19 @@ func (sm *ShodanMon) SendBannerEmail(b *shodan.HostData) error {
 // Status prints current status of monitor to logger, or returns an error
 func (sm *ShodanMon) Status() {
 	c := sm.ShodanClient
+
+	asciiArt := `
+_____/\\\\\\\\\\\____/\\\________________________/\\\\____________/\\\\_____________________________        
+ ___/\\\/////////\\\_\/\\\_______________________\/\\\\\\________/\\\\\\_____________________________       
+  __\//\\\______\///__\/\\\_______________________\/\\\//\\\____/\\\//\\\_____________________________      
+   ___\////\\\_________\/\\\_____________/\\\\\____\/\\\\///\\\/\\\/_\/\\\_____/\\\\\_____/\\/\\\\\\___     
+    ______\////\\\______\/\\\\\\\\\\____/\\\///\\\__\/\\\__\///\\\/___\/\\\___/\\\///\\\__\/\\\////\\\__    
+     _________\////\\\___\/\\\/////\\\__/\\\__\//\\\_\/\\\____\///_____\/\\\__/\\\__\//\\\_\/\\\__\//\\\_   
+      __/\\\______\//\\\__\/\\\___\/\\\_\//\\\__/\\\__\/\\\_____________\/\\\_\//\\\__/\\\__\/\\\___\/\\\_  
+       _\///\\\\\\\\\\\/___\/\\\___\/\\\__\///\\\\\/___\/\\\_____________\/\\\__\///\\\\\/___\/\\\___\/\\\_ 
+        ___\///////////_____\///____\///_____\/////_____\///______________\///_____\/////_____\///____\///__`
+	log.Println(asciiArt)
+	log.Println("v1")
 	log.Println("Monitor Status")
 
 	log.Println("======PROFILE======")
