@@ -29,12 +29,12 @@ func main() {
 				log.Println("channel closed")
 				time.Sleep(time.Second * 600)
 				break
-			}
-
-			mon.ProcessBanner(banner)
-			err := mon.SendBannerEmail(banner)
-			if err != nil {
-				log.Println("Failed to send email: ", err)
+			} else {
+				mon.ProcessBanner(banner)
+				err := mon.SendBannerEmail(banner)
+				if err != nil {
+					log.Println("Failed to send email: ", err)
+				}
 			}
 		}
 	}

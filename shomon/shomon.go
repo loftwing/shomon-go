@@ -143,7 +143,6 @@ func (sm *ShodanMon) checkAlert(name string) bool {
 func (sm *ShodanMon) RegisterAlerts() {
 	c := sm.ShodanClient
 	cAlerts := sm.Config.Shodan.Networks
-
 	for n, b := range cAlerts {
 		if prs := sm.checkAlert(n); !prs {
 			log.Println("Adding: ", n, b)
