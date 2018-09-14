@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"log"
+	"time"
 
 	"github.com/loftwing/shomon-go/shomon"
 	"gopkg.in/ns3777k/go-shodan.v3/shodan"
@@ -20,22 +21,29 @@ func main() {
 	c.SetDebug(true)
 	mon.Status()
 	mon.RegisterAlerts()
-	// Buffered channel to move banners from the shodan stream to the Consume function above
-	firehose := make(chan *shodan.HostData)
-
-	err := c.GetBannersByAlerts(context.Background(), firehose)
-	if err != nil {
-		panic(err)
-	}
 
 	for {
-		banner, ok := <-firehose
-		if !ok {
-			log.Println("channel closed")
+		firehose := make(chan *shodan.HostData)
+
+		err := c.GetBannersByAlerts(context.Background(), firehose)
+		if err != nil || firehose == nil {
+			panic(err)
+		}
+		for {
+			banner, ok := <-firehose
+			if !ok {
+				log.Println("channel closed")
+				time.Sleep(time.Second * 600)
+				break
+			}
+
+			log.Printf("%+v\n", banner)
+
+			err := mon.SendBannerEmail(banner)
+			if err != nil {
+				log.Println("Failed to send email: ", err)
+			}
 		}
 
-		log.Printf("%+v\n", banner)
-
-		mon.SendBannerEmail(banner)
 	}
 }
