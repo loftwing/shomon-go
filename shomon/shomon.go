@@ -87,7 +87,7 @@ func (sm *ShodanMon) ProcessBanner(h *shodan.HostData) {
 	DescribeBanner(h)
 
 	s := Service{
-		IP:        string(h.IP),
+		IP:        h.IP.String(),
 		Port:      h.Port,
 		Transport: h.Transport,
 	}
@@ -172,12 +172,12 @@ func (sm *ShodanMon) SendBannerEmail(b *shodan.HostData) error {
 	m.SetHeader("To", sm.Config.Email.To[0])
 	m.SetHeader("Subject", "ShoMon: Service Found")
 	body := fmt.Sprintf(`
-<b>IP:</b> %s
-<b>Port:</b> %d
-<b>Transport:</b> %s
-<b>Title:</b> %s
-<b>Opts:</b>
-%+v`, string(b.IP), b.Port, b.Transport, b.Title, b.Opts)
+<b>IP:</b> %s <br>
+<b>Port:</b> %d <br>
+<b>Transport:</b> %s <br>
+<b>Title:</b> %s <br>
+<b>Opts:</b> <br>
+%+v`, b.IP.String(), b.Port, b.Transport, b.Title, b.Opts)
 
 	m.SetBody("text/html", body)
 
