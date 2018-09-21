@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"gopkg.in/gomail.v2"
 	"gopkg.in/ns3777k/go-shodan.v3/shodan"
@@ -61,8 +62,7 @@ func NewMonitor(configpath string, isLearning, isDebug bool) *ShodanMon {
 
 func (sm *ShodanMon) writeServiceToConfig(s *Service) error {
 	sm.Config.Known = append(sm.Config.Known, *s)
-
-	if nc, err := json.Marshal(sm.Config); err != nil {
+	if nc, err := json.MarshalIndent(sm.Config, "", "    "); err != nil {
 		return err
 	} else {
 		err := ioutil.WriteFile(sm.ConfigPath, nc, 0644)
@@ -169,7 +169,7 @@ func loadConfig(file string) *Config {
 func (sm *ShodanMon) SendBannerEmail(b *shodan.HostData) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", sm.Config.Email.From)
-	m.SetHeader("To", sm.Config.Email.To[0])
+	m.SetHeader("To", strings.Join(sm.Config.Email.To, ","))
 	m.SetHeader("Subject", "ShoMon: Service Found")
 	body := fmt.Sprintf(`
 <b>IP:</b> %s <br>
@@ -212,7 +212,7 @@ _____/\\\\\\\\\\\____/\\\________________________/\\\\____________/\\\\_________
        _\///\\\\\\\\\\\/___\/\\\___\/\\\__\///\\\\\/___\/\\\_____________\/\\\__\///\\\\\/___\/\\\___\/\\\_ 
         ___\///////////_____\///____\///_____\/////_____\///______________\///_____\/////_____\///____\///__`
 	log.Println(asciiArt)
-	log.Println("v1")
+	log.Println("v3")
 	log.Println("Monitor Status")
 
 	log.Println("======PROFILE======")
