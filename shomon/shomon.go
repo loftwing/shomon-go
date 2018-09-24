@@ -38,6 +38,7 @@ type Config struct {
 
 // Service reps a single service
 type Service struct {
+	Name      string `json:"name"`
 	IP        string `json:"ip"`
 	Port      int    `json:"port"`
 	Transport string `json:"transport"`
@@ -83,24 +84,32 @@ func (sm *ShodanMon) Start() chan *shodan.HostData {
 	return nc
 }
 
-func (sm *ShodanMon) ProcessBanner(h *shodan.HostData) {
-	DescribeBanner(h)
+func (sm *ShodanMon) ProcessBanner(h *shodan.HostData) error {
 
 	s := Service{
+		Name:      "unknown",
 		IP:        h.IP.String(),
 		Port:      h.Port,
 		Transport: h.Transport,
 	}
 
 	if !sm.IsKnown(s) {
+		// If service doesnt match, add it to known and send an email
 		sm.AddKnown(s)
+		if err := sm.SendBannerEmail(h); err != nil {
+			return err
+		}
 	}
+	// Match found, just return nil
+	return nil
 }
 
 func (sm *ShodanMon) IsKnown(s Service) bool {
 	known := false
 	for _, v := range sm.Known {
 		if v.Transport == s.Transport && v.IP == s.IP && v.Port == s.Port {
+			log.Println("Found known: ")
+			DescribeBanner(&s)
 			known = true
 		}
 	}
@@ -108,11 +117,12 @@ func (sm *ShodanMon) IsKnown(s Service) bool {
 	return known
 }
 
-func DescribeBanner(h *shodan.HostData) {
+func DescribeBanner(s *Service) {
 	log.Println("========================")
-	log.Printf("IP: %s\n", string(h.IP))
-	log.Printf("Port: %d\n", h.Port)
-	log.Printf("Transport: %s\n", h.Transport)
+	log.Printf("Name: %s\n", s.Name)
+	log.Printf("IP: %s\n", s.IP)
+	log.Printf("Port: %d\n", s.Port)
+	log.Printf("Transport: %s\n", s.Transport)
 }
 
 func (sm *ShodanMon) AddKnown(s Service) {
@@ -161,7 +171,9 @@ func loadConfig(file string) *Config {
 		log.Panic("Could not open config file!: ", err)
 	}
 	jsonParser := json.NewDecoder(configFile)
-	jsonParser.Decode(&config)
+	if err = jsonParser.Decode(&config); err != nil {
+		log.Panic(err)
+	}
 	return &config
 }
 
