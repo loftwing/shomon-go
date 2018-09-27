@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gopkg.in/gomail.v2"
+	"gopkg.in/ns3777k/go-shodan.v3/shodan"
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
-
-	"gopkg.in/gomail.v2"
-	"gopkg.in/ns3777k/go-shodan.v3/shodan"
 )
 
 // ShodanMon todo
@@ -95,6 +93,9 @@ func (sm *ShodanMon) ProcessBanner(h *shodan.HostData) error {
 
 	if !sm.IsKnown(s) {
 		// If service doesnt match, add it to known and send an email
+		log.Println("Unknown service found: ")
+		DescribeBanner(&s)
+
 		sm.AddKnown(s)
 		if err := sm.SendBannerEmail(h); err != nil {
 			return err
@@ -108,7 +109,7 @@ func (sm *ShodanMon) IsKnown(s Service) bool {
 	known := false
 	for _, v := range sm.Known {
 		if v.Transport == s.Transport && v.IP == s.IP && v.Port == s.Port {
-			log.Println("Found known: ")
+			log.Printf("Found known: %s\n", v.Name)
 			DescribeBanner(&s)
 			known = true
 		}
@@ -126,12 +127,15 @@ func DescribeBanner(s *Service) {
 }
 
 func (sm *ShodanMon) AddKnown(s Service) {
+	// if in learning mode write known to config
 	if sm.Learning {
 		if err := sm.writeServiceToConfig(&s); err != nil {
 			log.Println("Couldnt write service to config: ", err)
 		}
 	}
 
+	// even if not in learning mode, save known to the current list of knowns
+	// so we dont get repeats on same run
 	sm.Known = append(sm.Known, s)
 }
 
@@ -181,7 +185,6 @@ func loadConfig(file string) *Config {
 func (sm *ShodanMon) SendBannerEmail(b *shodan.HostData) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", sm.Config.Email.From)
-	m.SetHeader("To", strings.Join(sm.Config.Email.To, ","))
 	m.SetHeader("Subject", "ShoMon: Service Found")
 	body := fmt.Sprintf(`
 <b>IP:</b> %s <br>
@@ -199,6 +202,12 @@ func (sm *ShodanMon) SendBannerEmail(b *shodan.HostData) error {
 		Host: sm.Config.Email.Server,
 		SSL:  false,
 	}
+
+	addrs := make([]string, len(sm.Config.Email.To))
+	for i, rcpt := range sm.Config.Email.To {
+		addrs[i] = m.FormatAddress(rcpt, "")
+	}
+	m.SetHeader("To", addrs...)
 
 	// Send it
 	if err := d.DialAndSend(m); err != nil {
@@ -224,7 +233,7 @@ _____/\\\\\\\\\\\____/\\\________________________/\\\\____________/\\\\_________
        _\///\\\\\\\\\\\/___\/\\\___\/\\\__\///\\\\\/___\/\\\_____________\/\\\__\///\\\\\/___\/\\\___\/\\\_ 
         ___\///////////_____\///____\///_____\/////_____\///______________\///_____\/////_____\///____\///__`
 	log.Println(asciiArt)
-	log.Println("v3")
+	log.Println("v4")
 	log.Println("Monitor Status")
 
 	log.Println("======PROFILE======")
